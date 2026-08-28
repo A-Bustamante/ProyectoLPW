@@ -1,0 +1,47 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Cargar Acta Firmada - CMDB{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animated-fade-in">
+    <div class="col-md-8 col-lg-6">
+        <h1 class="mb-4 text-center"><i class="fa-solid fa-file-signature text-info me-2"></i>Formalización de Asignación</h1>
+        
+        <div class="glass-card mb-4 text-center">
+            <h4 class="mb-3">Paso 1: Descargar Acta Autogenerada</h4>
+            <p class="text-secondary mb-4">Descargue el acta generada con los datos del colaborador y del activo para su firma física o digital.</p>
+            {% if assignment.pdf_acta %}
+                <a href="{{ assignment.pdf_acta.url }}" target="_blank" class="btn btn-premium btn-lg mb-2">
+                    <i class="fa-solid fa-file-pdf me-2"></i>Descargar Acta PDF
+                </a>
+            {% else %}
+                <div class="alert alert-warning text-white bg-dark border-0">El acta PDF aún no ha sido generada. Contacte a soporte.</div>
+            {% endif %}
+        </div>
+
+        <div class="glass-card">
+            <h4 class="mb-3 text-center">Paso 2: Cargar Acta Firmada</h4>
+            <p class="text-secondary text-center mb-4">Cargue el documento firmado por el colaborador para completar y formalizar el préstamo en el expediente.</p>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label class="form-label" for="{{ form.signature_pdf.id_for_label }}">{{ form.signature_pdf.label }}</label>
+                    {{ form.signature_pdf }}
+                    <div class="form-text text-muted">Suba únicamente archivos en formato PDF (.pdf).</div>
+                    {% if form.signature_pdf.errors %}
+                        <div class="text-danger mt-1">{{ form.signature_pdf.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-premium btn-lg">
+                        <i class="fa-solid fa-cloud-arrow-up me-2"></i>Subir Acta Firmada y Finalizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

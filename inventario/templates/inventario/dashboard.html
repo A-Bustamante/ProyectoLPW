@@ -1,0 +1,163 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Dashboard General - CMDB{% endblock %}
+
+{% block content %}
+<div class="row mb-4 animated-fade-in">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="m-0">Tablero de Gestión CMDB</h1>
+            <p class="text-secondary">Información consolidada de los activos tecnológicos y auditoría de la organización.</p>
+        </div>
+        <span class="badge {% if from_cache %}bg-success{% else %}bg-primary{% endif %} badge-status py-2 px-3">
+            <i class="fa-solid fa-database me-2"></i>
+            {% if from_cache %}
+                Caché de Redis Activo (Métricas del Dashboard)
+            {% else %}
+                Cálculo en Tiempo Real (Recién cacheado)
+            {% endif %}
+            | Generado a las: {{ metrics.calculated_at }}
+        </span>
+    </div>
+</div>
+
+<!-- Metrics Row -->
+<div class="row g-4 mb-5 animated-fade-in" style="animation-delay: 0.1s;">
+    <div class="col-md-3 col-sm-6">
+        <div class="glass-card text-center">
+            <i class="fa-solid fa-boxes-stacked text-primary fs-2 mb-3"></i>
+            <div class="metric-number">{{ metrics.total_assets }}</div>
+            <div class="text-secondary font-weight-500">Total de Activos TI</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="glass-card text-center">
+            <i class="fa-solid fa-warehouse text-success fs-2 mb-3"></i>
+            <div class="metric-number text-success">{{ metrics.in_stock }}</div>
+            <div class="text-secondary font-weight-500">En Bodega (Disponible)</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="glass-card text-center">
+            <i class="fa-solid fa-laptop-house text-info fs-2 mb-3"></i>
+            <div class="metric-number text-info">{{ metrics.assigned }}</div>
+            <div class="text-secondary font-weight-500">Asignados (En Operación)</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="glass-card text-center">
+            <i class="fa-solid fa-screwdriver-wrench text-warning fs-2 mb-3"></i>
+            <div class="metric-number text-warning">{{ metrics.maintenance }}</div>
+            <div class="text-secondary font-weight-500">En Mantenimiento</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 animated-fade-in" style="animation-delay: 0.2s;">
+    <!-- Chart Column -->
+    <div class="col-md-5">
+        <div class="glass-card h-100">
+            <h3>Distribución de Hardware</h3>
+            <p class="text-secondary">Proporción de activos según su clasificación técnica.</p>
+            <div class="chart-container mt-4" style="position: relative; height:250px;">
+                <canvas id="assetsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Audit Logs -->
+    <div class="col-md-7">
+        <div class="glass-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Registro de Transacciones de Auditoría</h3>
+                <span class="text-muted"><i class="fa-solid fa-shield-halved me-1"></i>ISO 27001</span>
+            </div>
+            <p class="text-secondary mb-4">Registro inmutable de actividades en el inventario.</p>
+            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table class="table table-dark table-hover table-borderless">
+                    <thead>
+                        <tr class="text-muted border-bottom border-secondary">
+                            <th>Fecha</th>
+                            <th>Acción</th>
+                            <th>Usuario / IP</th>
+                            <th>Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in metrics.recent_logs %}
+                            <tr>
+                                <td class="text-nowrap" style="font-size: 0.85rem;">{{ log.timestamp|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <span class="badge {% if log.action == 'CHECK-OUT' %}bg-primary{% elif log.action == 'CHECK-IN' %}bg-success{% elif 'ALERTA' in log.action or 'REMOTE_WIPE' in log.action %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ log.action }}
+                                    </span>
+                                </td>
+                                <td style="font-size: 0.85rem;">
+                                    <strong>{{ log.user.username|default:"Sistema" }}</strong><br>
+                                    <span class="text-muted">{{ log.ip_address|default:"-" }}</span>
+                                </td>
+                                <td style="font-size: 0.85rem;" class="text-secondary">{{ log.details }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">No se registran actividades recientes en el log.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('assetsChart').getContext('2d');
+        const typesData = {{ metrics.types_data|safe }};
+        
+        const labels = typesData.map(d => d.type);
+        const data = typesData.map(d => d.count);
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#3b82f6', // blue
+                        '#14b8a6', // teal
+                        '#a855f7', // purple
+                        '#f59e0b', // amber
+                        '#ef4444', // red
+                        '#64748b', // slate
+                        '#10b981'  // emerald
+                    ],
+                    borderWidth: 1,
+                    borderColor: 'rgba(255, 255, 255, 0.1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#94a3b8',
+                            font: {
+                                family: 'Inter',
+                                size: 11
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

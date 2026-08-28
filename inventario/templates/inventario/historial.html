@@ -1,0 +1,143 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Trazabilidad e Historial - CMDB{% endblock %}
+
+{% block content %}
+<div class="row mb-4 animated-fade-in">
+    <div class="col-12">
+        <h1>Trazabilidad e Historial de Activos</h1>
+        <p class="text-secondary">Consulte la línea de tiempo completa de préstamos y retornos para cualquier dispositivo o colaborador.</p>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="row mb-5 animated-fade-in" style="animation-delay: 0.1s;">
+    <div class="col-md-8 col-lg-6">
+        <div class="glass-card">
+            <form method="get" action="{% url 'historial' %}" class="d-flex gap-2">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Buscar por Código Interno, Serial o ID Empleado..." required>
+                </div>
+                <button type="submit" class="btn btn-premium">Buscar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if query %}
+    <div class="row animated-fade-in" style="animation-delay: 0.2s;">
+        <!-- Entity Details -->
+        <div class="col-md-4">
+            <div class="glass-card mb-4">
+                {% if search_type == 'asset' %}
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-laptop text-info fs-1 me-3"></i>
+                        <div>
+                            <span class="text-muted">Activo Encontrado:</span>
+                            <h4 class="m-0 text-info">{{ asset.custom_code }}</h4>
+                        </div>
+                    </div>
+                    <hr class="border-secondary">
+                    <p class="mb-1 text-secondary">Marca y Modelo: <strong>{{ asset.brand }} {{ asset.model }}</strong></p>
+                    <p class="mb-1 text-secondary">Número de Serie: <code>{{ asset.serial_number }}</code></p>
+                    <p class="mb-1 text-secondary">Tipo de Activo: <strong>{{ asset.get_asset_type_display }}</strong></p>
+                    <p class="mb-1 text-secondary">Estado actual: 
+                        <span class="badge {% if asset.status == 'BODEGA' %}bg-success{% elif asset.status == 'ASIGNADO' %}bg-primary{% else %}bg-secondary{% endif %}">
+                            {{ asset.get_status_display }}
+                        </span>
+                    </p>
+                {% elif search_type == 'employee' %}
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-user-tie text-info fs-1 me-3"></i>
+                        <div>
+                            <span class="text-muted">Colaborador Encontrado:</span>
+                            <h4 class="m-0 text-info">{{ employee.first_name }} {{ employee.last_name }}</h4>
+                        </div>
+                    </div>
+                    <hr class="border-secondary">
+                    <p class="mb-1 text-secondary">ID / Cédula: <strong>{{ employee.employee_id }}</strong></p>
+                    <p class="mb-1 text-secondary">Área / Cargo: <strong>{{ employee.department }} / {{ employee.role }}</strong></p>
+                    <p class="mb-1 text-secondary">Correo: <strong>{{ employee.email }}</strong></p>
+                    <p class="mb-1 text-secondary">Vinculación: 
+                        <span class="badge {% if employee.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if employee.is_active %}Activo{% else %}Inactivo{% endif %}
+                        </span>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="col-md-8">
+            <div class="glass-card">
+                <h3 class="mb-4">Línea de Tiempo de Transacciones</h3>
+                
+                <div class="timeline-container">
+                    {% for item in timeline %}
+                        <div class="timeline-item {% if item.is_returned %}returned{% endif %}">
+                            <div class="timeline-badge"></div>
+                            <div class="p-3 bg-dark rounded" style="border: 1px solid rgba(255,255,255,0.05);">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h5 class="m-0 text-info">
+                                            {% if search_type == 'asset' %}
+                                                Entregado a: {{ item.employee }}
+                                            {% else %}
+                                                Asignación de: {{ item.asset.custom_code }} ({{ item.asset.brand }} {{ item.asset.model }})
+                                            {% endif %}
+                                        </h5>
+                                        <span class="text-muted" style="font-size: 0.8rem;">
+                                            <i class="fa-solid fa-user-shield me-1"></i>Analista: {{ item.officer.username }}
+                                        </span>
+                                    </div>
+                                    <span class="badge {% if item.is_returned %}bg-success{% else %}bg-primary{% endif %}">
+                                        {% if item.is_returned %}Devolución Completada{% else %}Asignado actualmente{% endif %}
+                                    </span>
+                                </div>
+
+                                <div class="row g-2 mt-2">
+                                    <div class="col-sm-6" style="font-size: 0.9rem;">
+                                        <div class="text-white fw-bold mb-1"><i class="fa-solid fa-arrow-right-from-bracket text-success me-1"></i>Entrega ({{ item.check_out_date|date:"d/m/Y H:i" }})</div>
+                                        <p class="text-secondary mb-1">Notas: {{ item.check_out_notes|default:"Buen estado" }}</p>
+                                        <p class="text-secondary mb-0" style="font-size: 0.8rem;">Accesorios: {{ item.check_out_accessories|join:", "|default:"Ninguno" }}</p>
+                                        {% if item.check_out_image %}
+                                            <a href="{{ item.check_out_image.url }}" target="_blank" class="d-inline-block mt-2 text-info" style="font-size: 0.8rem;">
+                                                <i class="fa-solid fa-image me-1"></i>Ver Evidencia de Entrega
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if item.is_returned %}
+                                        <div class="col-sm-6" style="font-size: 0.9rem; border-left: 1px solid rgba(255,255,255,0.05);">
+                                            <div class="text-white fw-bold mb-1"><i class="fa-solid fa-arrow-right-to-bracket text-warning me-1"></i>Devolución ({{ item.check_in_date|date:"d/m/Y H:i" }})</div>
+                                            <p class="text-secondary mb-1">Notas: {{ item.check_in_notes|default:"Recibido conforme" }}</p>
+                                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">Accesorios: {{ item.check_in_accessories|join:", "|default:"Ninguno" }}</p>
+                                            {% if item.check_in_image %}
+                                                <a href="{{ item.check_in_image.url }}" target="_blank" class="d-inline-block mt-2 text-info" style="font-size: 0.8rem;">
+                                                    <i class="fa-solid fa-image me-1"></i>Ver Evidencia de Retorno
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mt-3 d-flex gap-2">
+                                    {% if item.pdf_acta %}
+                                        <a href="{{ item.pdf_acta.url }}" target="_blank" class="btn btn-sm btn-outline-light"><i class="fa-solid fa-file-pdf me-1"></i>Acta PDF</a>
+                                    {% endif %}
+                                    {% if item.signature_pdf %}
+                                        <a href="{{ item.signature_pdf.url }}" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa-solid fa-file-signature me-1"></i>Acta Firmada</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-muted">No se registran asignaciones ni transacciones de inventario en el historial.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

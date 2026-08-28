@@ -1,0 +1,105 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}{{ title }} - CMDB{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animated-fade-in">
+    <div class="col-md-8 col-lg-6">
+        <div class="d-flex align-items-center mb-4">
+            <a href="{% url 'activo_list' %}" class="btn btn-secondary-premium btn-sm me-3">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </a>
+            <h1 class="m-0">{{ title }}</h1>
+        </div>
+
+        <div class="glass-card">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" for="{{ form.custom_code.id_for_label }}">{{ form.custom_code.label }}</label>
+                        {{ form.custom_code }}
+                        {% if form.custom_code.errors %}
+                            <div class="text-danger mt-1 fs-6">{{ form.custom_code.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="{{ form.asset_type.id_for_label }}">{{ form.asset_type.label }}</label>
+                        {{ form.asset_type }}
+                        {% if form.asset_type.errors %}
+                            <div class="text-danger mt-1 fs-6">{{ form.asset_type.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" for="{{ form.brand.id_for_label }}">{{ form.brand.label }}</label>
+                        {{ form.brand }}
+                        {% if form.brand.errors %}
+                            <div class="text-danger mt-1 fs-6">{{ form.brand.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="{{ form.model.id_for_label }}">{{ form.model.label }}</label>
+                        {{ form.model }}
+                        {% if form.model.errors %}
+                            <div class="text-danger mt-1 fs-6">{{ form.model.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" for="{{ form.serial_number.id_for_label }}">{{ form.serial_number.label }}</label>
+                        {{ form.serial_number }}
+                        {% if form.serial_number.errors %}
+                            <div class="text-danger mt-1 fs-6">{{ form.serial_number.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="{{ form.imei.id_for_label }}">{{ form.imei.label }}</label>
+                        {{ form.imei }}
+                        {% if form.imei.errors %}
+                            <div class="text-danger mt-1 fs-6">{{ form.imei.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="text-danger mt-1 fs-6">{{ form.status.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="{{ form.acquisition_date.id_for_label }}">{{ form.acquisition_date.label }}</label>
+                        {{ form.acquisition_date }}
+                        {% if form.acquisition_date.errors %}
+                            <div class="text-danger mt-1 fs-6">{{ form.acquisition_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label d-block" for="{{ form.evidence_image.id_for_label }}">{{ form.evidence_image.label }}</label>
+                    {{ form.evidence_image }}
+                    <div class="form-text text-muted">Solo formatos JPG o PNG. Tamaño máximo de 5MB.</div>
+                    {% if form.evidence_image.errors %}
+                        <div class="text-danger mt-1 fs-6">{{ form.evidence_image.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-premium btn-lg">
+                        <i class="fa-solid fa-floppy-disk me-2"></i>Guardar Activo TI
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

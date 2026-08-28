@@ -1,0 +1,49 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Confirmar Borrado Remoto - CMDB{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animated-fade-in">
+    <div class="col-md-8 col-lg-6">
+        <div class="d-flex align-items-center mb-4">
+            <a href="{% url 'activo_list' %}" class="btn btn-secondary-premium btn-sm me-3">
+                <i class="fa-solid fa-arrow-left"></i> Cancelar
+            </a>
+            <h1 class="m-0 text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Borrado Remoto</h1>
+        </div>
+
+        <div class="glass-card border-danger" style="border-width: 1px;">
+            <div class="text-center mb-4">
+                <i class="fa-solid fa-shield-virus text-danger display-3 mb-3"></i>
+                <h3 class="text-white">¿Confirmar Borrado Remoto (Remote Wipe)?</h3>
+                <p class="text-danger font-weight-600 mb-0">Esta acción no se puede deshacer.</p>
+            </div>
+
+            <div class="p-3 bg-dark rounded text-secondary mb-4" style="font-size: 0.95rem; border: 1px solid rgba(255,255,255,0.05);">
+                <p class="mb-1"><strong>Detalles del Dispositivo:</strong></p>
+                <ul class="mb-0">
+                    <li>Código Interno: <strong class="text-white">{{ asset.custom_code }}</strong></li>
+                    <li>Marca / Modelo: {{ asset.brand }} {{ asset.model }}</li>
+                    <li>Número de Serie: <code>{{ asset.serial_number }}</code></li>
+                    <li>IMEI: <code>{{ asset.imei|default:"N/A" }}</code></li>
+                </ul>
+            </div>
+
+            <div class="alert alert-warning bg-dark border-0 text-white" style="background-color: rgba(25, 30, 45, 0.9);">
+                <i class="fa-solid fa-circle-exclamation text-warning fs-5 me-2"></i>
+                Se enviará una orden de restablecimiento y borrado de datos de fábrica al dispositivo. El activo se marcará inmediatamente como **Dado de Baja (BAJA)** y se cerrarán forzosamente todas las asignaciones vigentes asociadas a este equipo.
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="fa-solid fa-radiation me-2"></i>Ejecutar Borrado Remoto
+                    </button>
+                    <a href="{% url 'activo_list' %}" class="btn btn-secondary-premium">Cancelar y Volver</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
